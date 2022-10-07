@@ -1,0 +1,7 @@
+matplotlib==3.5.1
+neurokit2==0.2.0
+numpy==1.21.5
+pandas==1.4.1
+scipy==1.8.0
+tslearn==0.5.2
+wfdb==4.0.0
