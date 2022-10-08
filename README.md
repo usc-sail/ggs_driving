@@ -1,6 +1,5 @@
 # Tracking Stress-level Changes on Drivers
 
-Applying GGS to physio- and bio-signals.
 ```
 git clone https://github.com/usc-sail/ggs_driving
 cd ggs_driving && pip install -r requirements.txt
