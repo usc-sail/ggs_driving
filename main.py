@@ -20,8 +20,8 @@ def cluster_eval(gt_data, gt_bps, bps, n_clusters):
 
 if __name__ == "__main__":
 
-    dataset = "DriveDB"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
-    missing = 0  # percentage of data points to be removed
+    dataset = "AffectiveROAD"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
+    missing = 0.75  # percentage of data points to be removed
     sample_rate = 0.5  # final sample rate of signals (in Hz)
     gt_type = "EDA"  # choose from ["EDA", "Rating", "Fuse"]
     lmbda = 1  # hyperparameter of GGS algorithm
@@ -29,8 +29,8 @@ if __name__ == "__main__":
     streams = [  # physio signals to experiment with
         "HR",
         # "BR",
-        "RESP_rate",
-        "RESP_amp",
+        # "RESP_rate",
+        # "RESP_amp",
     ]
 
     print("Dataset:", dataset)

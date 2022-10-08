@@ -3,7 +3,7 @@ from itertools import combinations
 from ggs import GGS
 
 
-def apply_ggs(data, kmax=20, lmbda=15):
+def apply_ggs(data, kmax=20, lmbda=1):
     data = data.T if len(data.shape) != 1 else data[None, ...]
     bps, _ = GGS(data, kmax, lmbda)
     return bps[-1] if isinstance(bps[0], list) else bps
