@@ -20,16 +20,17 @@ def cluster_eval(gt_data, gt_bps, bps, n_clusters):
 
 if __name__ == "__main__":
 
-    dataset = "AffectiveROAD"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
+    dataset = "DriveDB"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
     missing = 0  # percentage of data points to be removed
     sample_rate = 0.5  # final sample rate of signals (in Hz)
     gt_type = "EDA"  # choose from ["EDA", "Rating", "Fuse"]
+    lmbda = 1  # hyperparameter of GGS algorithm
     n_clusters = 3  # number of clusters for the ground truth
     streams = [  # physio signals to experiment with
         "HR",
-        "BR",
-        # "RESP_rate",
-        # "RESP_amp",
+        # "BR",
+        "RESP_rate",
+        "RESP_amp",
     ]
 
     print("Dataset:", dataset)
@@ -40,8 +41,8 @@ if __name__ == "__main__":
         print(f"\n{names[i]}")
         score = cluster_eval(
             gt_data[i],
-            gt_bps=apply_ggs(gt_data[i]),
-            bps=apply_ggs(data[i].to_numpy()),
+            gt_bps=apply_ggs(gt_data[i], lmbda=lmbda),
+            bps=apply_ggs(data[i].to_numpy(), lmbda=lmbda),
             n_clusters=n_clusters,
         )
         print("Cover Metric:", np.around(score, 3))

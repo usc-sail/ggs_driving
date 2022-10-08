@@ -1,5 +1,7 @@
-import os, wfdb, pandas as pd, neurokit2 as nk
+import os, wfdb, pandas as pd
+import numpy as np, neurokit2 as nk
 from scipy.signal import butter, filtfilt
+
 
 def DriveDB(path, missing, sample_rate, gt_type, streams):
 
@@ -7,8 +9,19 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
     assert all(s in ["HR", "RESP_amp", "RESP_rate"] for s in streams), "Invalid streams"
 
     def lowpass_filter(ts=None, freq=15.5, cut=0.05):
-        b, a = butter(3, cut, fs=freq, btype='low')
+        b, a = butter(3, cut, fs=freq, btype="low")
         return filtfilt(b, a, ts)
+
+    def mask_values(signal=None, missing=missing):
+        num_missing = missing * len(signal)
+        impute_value = np.mean(signal)
+        mask = np.zeros(len(signal))
+        mask[: int(num_missing)] = 1
+        np.random.shuffle(mask)
+        signal = [
+            impute_value if (mask[i] and i) else signal[i] for i in range(len(signal))
+        ]
+        return np.array(signal)
 
     data, gt_data, names = [], [], []
     for file in sorted(os.listdir(path)):
@@ -29,11 +42,14 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
         this_df["RESP_amp"] = out[["RSP_Amplitude"]]
         this_df["RESP_rate"] = out[["RSP_Rate"]]
 
+        ### masking for missing data
+        this_df[streams] = this_df[streams].apply(mask_values)
+
         ### lowpass filter (0.05Hz) + downsample
         this_df.index = pd.date_range(
-            start='1/1/2022', periods=len(this_df), freq='0.065S'
+            start="1/1/2022", periods=len(this_df), freq="0.065S"
         )
-        down = int(1/sample_rate)
+        down = int(1 / sample_rate)
         this_df = this_df.apply(lowpass_filter).resample(f"{down}S").mean()
 
         ### specify ground truth
@@ -42,9 +58,6 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
         except:
             gt_signal = this_df["foot GSR"].to_numpy()
         gt_signal = lowpass_filter(gt_signal, freq=sample_rate, cut=0.01)
-
-        ### masking of "missing" values
-        ...
 
         data.append(this_df[streams])
         gt_data.append(gt_signal)
