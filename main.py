@@ -1,6 +1,7 @@
-import numpy as np
+import numpy as np, json, os
 from utils import *
 from datasets import load_dataset
+from tqdm import tqdm
 from tslearn.clustering import TimeSeriesKMeans
 
 
@@ -20,32 +21,43 @@ def cluster_eval(gt_data, gt_bps, bps, n_clusters):
 
 if __name__ == "__main__":
 
-    dataset = "AffectiveROAD"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
-    missing = 0.75  # percentage of data points to be removed
+    dataset = "HCIDriving"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
+    missing = 0  # percentage of data points to be removed
     sample_rate = 0.5  # final sample rate of signals (in Hz)
     gt_type = "EDA"  # choose from ["EDA", "Rating", "Fuse"]
-    lmbda = 1  # hyperparameter of GGS algorithm
-    n_clusters = 3  # number of clusters for the ground truth
+    lmbda = 15  # hyperparameter of GGS algorithm
+    n_clusters = 5  # number of clusters for the ground truth
     streams = [  # physio signals to experiment with
         "HR",
         # "BR",
         # "RESP_rate",
-        # "RESP_amp",
+        #"RESP_amp",
     ]
 
-    print("Dataset:", dataset)
-    data, gt_data, names = load_dataset(dataset, missing, sample_rate, gt_type, streams)
+    data, gt_data, names = load_dataset(
+        dataset,
+        missing,
+        sample_rate,
+        gt_type,
+        streams
+    )
 
-    scores = []
-    for i in range(len(names)):
-        print(f"\n{names[i]}")
+    scores, compute_avg = {}, []
+    for i in tqdm(range(len(names))):
         score = cluster_eval(
             gt_data[i],
             gt_bps=apply_ggs(gt_data[i], lmbda=lmbda),
             bps=apply_ggs(data[i].to_numpy(), lmbda=lmbda),
             n_clusters=n_clusters,
         )
-        print("Cover Metric:", np.around(score, 3))
-        scores.append(score)
+        compute_avg.append(score)
+        scores[names[i]] = np.around(score, 3)
+    scores["mean"] = np.around(np.mean(compute_avg), 3)
 
-    print("\nAverage Score:", np.around(np.mean(scores), 3))
+    ### logging configuration
+    dir_name = f"runs/{dataset}/"
+    log_name = f"{'_'.join(streams)}_gt_{gt_type}_lambda_{lmbda}_missing_{missing}_clusters_{n_clusters}"
+
+    os.makedirs(dir_name, exist_ok=True)
+    with open(dir_name + log_name + ".txt", 'w') as f:
+        f.write(json.dumps(scores))
