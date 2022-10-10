@@ -21,3 +21,5 @@ You can modify parameters of the experiment at the `main.py` file.
 ```
 python main.py
 ```
+
+Results are stored under `runs/{dataset}/` for each utilized dataset.
