@@ -1,10 +1,10 @@
-import pandas as pd, numpy as np
+import pandas as pd, numpy as np, neurokit2 as nk
 from scipy.signal import butter, filtfilt
 
 
 def HCIDriving(path, missing, sample_rate, gt_type, streams):
 
-    assert streams == ["HR"], "Invalid stream set"
+    assert all(s in ["HR", "BR"] for s in streams), "Invalid stream set"
 
     def lowpass_filter(ts=None, freq=1024, cut=0.25):
         b, a = butter(3, cut, fs=freq, btype="low")
@@ -42,8 +42,15 @@ def HCIDriving(path, missing, sample_rate, gt_type, streams):
             ]
         ]
 
-        ### process ECG independently
-        ...
+        ### extract ECG-derived Respiration
+        if "BR" in streams:
+            rpeaks, _ = nk.ecg_peaks(this_df["ECG"], sampling_rate=1024)
+            ecg_rate = nk.ecg_rate(
+                rpeaks, sampling_rate=1024, desired_length=len(this_df["ECG"])
+            )
+            # this_df["HR"] = ecg_rate
+            this_df["BR"] = nk.ecg_rsp(ecg_rate, sampling_rate=1024)
+
         ### masking of "missing" values
         this_df[streams] = this_df[streams].apply(mask_values)
 
