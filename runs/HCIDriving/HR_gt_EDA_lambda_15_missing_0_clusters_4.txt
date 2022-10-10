@@ -1,1 +1,0 @@
-{"participant_1": 0.861, "participant_2": 0.887, "participant_3": 0.788, "participant_4": 0.855, "participant_5": 0.871, "participant_6": 0.605, "participant_7": 0.923, "participant_8": 0.946, "participant_9": 0.913, "participant_10": 0.823, "mean": 0.847}

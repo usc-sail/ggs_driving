@@ -26,21 +26,15 @@ if __name__ == "__main__":
     sample_rate = 0.5  # final sample rate of signals (in Hz)
     gt_type = "EDA"  # choose from ["EDA", "Rating", "Fuse"]
     lmbda = 15  # hyperparameter of GGS algorithm
-    n_clusters = 5  # number of clusters for the ground truth
+    n_clusters = 3  # number of clusters for the ground truth
     streams = [  # physio signals to experiment with
         "HR",
         # "BR",
         # "RESP_rate",
-        #"RESP_amp",
+        # "RESP_amp",
     ]
 
-    data, gt_data, names = load_dataset(
-        dataset,
-        missing,
-        sample_rate,
-        gt_type,
-        streams
-    )
+    data, gt_data, names = load_dataset(dataset, missing, sample_rate, gt_type, streams)
 
     scores, compute_avg = {}, []
     for i in tqdm(range(len(names))):
@@ -59,5 +53,5 @@ if __name__ == "__main__":
     log_name = f"{'_'.join(streams)}_gt_{gt_type}_lambda_{lmbda}_missing_{missing}_clusters_{n_clusters}"
 
     os.makedirs(dir_name, exist_ok=True)
-    with open(dir_name + log_name + ".txt", 'w') as f:
-        f.write(json.dumps(scores))
+    with open(dir_name + log_name + ".json", "w") as f:
+        f.write(json.dumps(scores, indent=4))
