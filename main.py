@@ -1,4 +1,4 @@
-import numpy as np, json, os
+import numpy as np, json, os, argparse
 from utils import *
 from datasets import load_dataset
 from tqdm import tqdm
@@ -20,37 +20,37 @@ def cluster_eval(gt_data, gt_bps, bps, n_clusters):
 
 
 if __name__ == "__main__":
+    # Argument parser
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--dataset', default="DriveDB", help="dataset used for experiments: choose from DriveDB, HCIDriving, AffectiveROAD")
+    parser.add_argument('--data_dir', default="/media/data/public-data/drive/drivedb/1.0.0/")
+    parser.add_argument('--missing', default=0.0, type=float, help="data missing rate")
+    parser.add_argument('--gt_type', default="EDA", type=str, help="choose from EDA, Rating, Fuse")
+    parser.add_argument('--lmbda', default=1.0, type=float, help="hyperparameter of GGS algorithm")
+    parser.add_argument('--ncluster', default=3, type=int, help="number of clusters")
+    parser.add_argument('--sample_rate', default=0.5, type=float, help="sampling rate")
+    parser.add_argument("--streams", nargs="*", type=str, default=["HR"], help="physio signals to experiment with: HR, BR, RESP_rate, RESP_amp")
+    args = parser.parse_args()
 
-    dataset = "HCIDriving"  # choose from ["DriveDB", "HCIDriving", "AffectiveROAD"]
-    missing = 0  # percentage of data points to be removed
-    sample_rate = 0.5  # final sample rate of signals (in Hz)
-    gt_type = "EDA"  # choose from ["EDA", "Rating", "Fuse"]
-    lmbda = 15  # hyperparameter of GGS algorithm
-    n_clusters = 3  # number of clusters for the ground truth
-    streams = [  # physio signals to experiment with
-        "HR",
-        # "BR",
-        # "RESP_rate",
-        # "RESP_amp",
-    ]
-
-    data, gt_data, names = load_dataset(dataset, missing, sample_rate, gt_type, streams)
-
-    scores, compute_avg = {}, []
+    # load data set
+    data, gt_data, names = load_dataset(args.data_dir, args.dataset, args.missing, args.sample_rate, args.gt_type, args.streams)
+    scores, compute_avg = dict(), list()
     for i in tqdm(range(len(names))):
         score = cluster_eval(
             gt_data[i],
-            gt_bps=apply_ggs(gt_data[i], lmbda=lmbda),
-            bps=apply_ggs(data[i].to_numpy(), lmbda=lmbda),
-            n_clusters=n_clusters,
+            gt_bps=apply_ggs(gt_data[i], lmbda=args.lmbda),
+            bps=apply_ggs(data[i].to_numpy(), lmbda=args.lmbda),
+            n_clusters=args.ncluster,
         )
         compute_avg.append(score)
         scores[names[i]] = np.around(score, 3)
     scores["mean"] = np.around(np.mean(compute_avg), 3)
 
     ### logging configuration
-    dir_name = f"runs/{dataset}/"
-    log_name = f"{'_'.join(streams)}_gt_{gt_type}_lambda_{lmbda}_missing_{missing}_clusters_{n_clusters}"
+    dir_name = f"runs/{args.dataset}/"
+    # import pdb
+    # pdb.set_trace()
+    log_name = f"{'_'.join(args.streams)}_gt_{args.gt_type}_lambda_{args.lmbda}_missing_{args.missing}_clusters_{args.ncluster}"
 
     os.makedirs(dir_name, exist_ok=True)
     with open(dir_name + log_name + ".json", "w") as f:
