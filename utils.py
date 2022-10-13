@@ -14,7 +14,6 @@ def plot_ggs(signal, bps):
     plt.plot(signal)
     for x in bps:
         plt.axvline(x=x, linestyle="--", color="black")
-    # plt.yticks([])
     plt.show()
 
 
@@ -28,13 +27,38 @@ def segment_ts(ts, bps):
     return np.stack(X)
 
 
-def plot_cluster(signal, bps, clusters):
+def plot_cluster(signal, gt_bps, clusters, bps):
     plt.figure(figsize=(20, 4))
-    plt.plot(signal)
-    colors = ["red", "green", "blue", "orange"]
-    for i in range(len(bps) - 1):
-        plt.axvspan(bps[i], bps[i + 1], facecolor=colors[clusters[i]], alpha=0.25)
-    # plt.yticks([])
+    norm = 60 * 0.5
+
+    time = np.linspace(0, len(signal) / norm, num=len(signal))
+    plt.plot(time, signal, color="black")
+
+    plt.xlim(0, len(signal) / norm)
+    plt.xticks(np.arange(0, len(signal) / norm, 5))
+    plt.xlabel("Time (min)")
+    plt.ylabel("Clustered Ground Truth")
+    plt.title("Breakpoint Proposals")
+
+    num = len(set(clusters))
+    colors = (
+        ["#003f5c", "#58508d", "#bc5090", "#ff6361", "#ffa600"]
+        if num == 5
+        else ["#003f5c", "#7a5195", "#ef5675", "#ffa600"]
+        if num == 4
+        else ["#003f5c", "#bc5090", "#ffa600"]
+        if num == 3
+        else ["#003f5c", "#ffa600"]
+    )
+    for i in range(len(gt_bps) - 1):
+        plt.axvspan(
+            gt_bps[i] / norm,
+            gt_bps[i + 1] / norm,
+            facecolor=colors[clusters[i]],
+            alpha=0.3,
+        )
+    for x in bps:
+        plt.axvline(x=x / norm, linestyle="--", color="black")
     plt.show()
 
 
