@@ -1,5 +1,6 @@
 import pandas as pd, numpy as np, neurokit2 as nk
 from scipy.signal import butter, filtfilt
+from raaw import compute_EWE
 
 
 def HCIDriving(path, missing, sample_rate, gt_type, streams):
@@ -22,8 +23,11 @@ def HCIDriving(path, missing, sample_rate, gt_type, streams):
         return np.array(signal)
 
     def fuse_gt(s1, s2):
-        combined = np.array([s1, s2])
-        return np.mean(combined, axis=0)
+        s1 = (s1 - np.mean(s1)) / np.std(s1)
+        s2 = (s2 - np.mean(s2)) / np.std(s2)
+        input = np.expand_dims(np.array([s1, s2]), axis=0)
+        output = compute_EWE(np.expand_dims(input, axis=-1))
+        return output[0].squeeze()
 
     data, gt_data, names = [], [], []
     for i in range(1, 11):
