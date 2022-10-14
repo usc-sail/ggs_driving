@@ -9,5 +9,6 @@
     "participant_8": 0.976,
     "participant_9": 0.902,
     "participant_10": 0.92,
-    "mean": 0.87
+    "mean": 0.87,
+    "std": 0.084
 }
