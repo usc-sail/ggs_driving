@@ -7,7 +7,7 @@ def HCIDriving(path, missing, sample_rate, gt_type, streams):
 
     assert all(s in ["HR", "BR"] for s in streams), "Invalid stream set"
 
-    def lowpass_filter(ts=None, freq=1024, cut=0.25):
+    def lowpass_filter(ts=None, freq=1024, cut=0.05):
         b, a = butter(3, cut, fs=freq, btype="low")
         return filtfilt(b, a, ts)
 
@@ -68,9 +68,9 @@ def HCIDriving(path, missing, sample_rate, gt_type, streams):
 
         ### smooth + same for ground truth
         stream1 = clean_data["SCR"].to_numpy().squeeze()
-        stream1 = lowpass_filter(stream1, freq=sample_rate, cut=0.1)
+        stream1 = lowpass_filter(stream1, freq=sample_rate, cut=0.01)
         stream2 = clean_data["Rating_Videorating"].to_numpy().squeeze()
-        stream2 = lowpass_filter(stream2, freq=sample_rate, cut=0.1)
+        stream2 = lowpass_filter(stream2, freq=sample_rate, cut=0.01)
 
         if gt_type == "EDA":
             gt_signal = stream1
