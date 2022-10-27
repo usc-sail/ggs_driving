@@ -1,6 +1,7 @@
 import pandas as pd, numpy as np, neurokit2 as nk
 from scipy.signal import butter, filtfilt
 from raaw import compute_EWE
+import matplotlib.pyplot as plt
 
 
 def HCIDriving(path, missing, sample_rate, gt_type, streams):
@@ -11,16 +12,40 @@ def HCIDriving(path, missing, sample_rate, gt_type, streams):
         b, a = butter(3, cut, fs=freq, btype="low")
         return filtfilt(b, a, ts)
 
-    def mask_values(signal=None, missing=missing):
-        num_missing = missing * len(signal)
-        impute_value = np.mean(signal)
-        mask = np.zeros(len(signal))
-        mask[: int(num_missing)] = 1
-        np.random.shuffle(mask)
-        signal = [
-            impute_value if (mask[i] and i) else signal[i] for i in range(len(signal))
-        ]
-        return np.array(signal)
+    def mask_intervals(signal=None, missing=missing):
+        # undo signal upsampling
+        down_signal = np.array(signal)[::8]
+
+        intervals, durations = [], []
+        min_win, max_win = 0 * len(down_signal), 0.01 * len(down_signal)
+
+        def cap(a, b):
+            return [i for i in a if i in b]
+
+        while sum(durations) < missing * len(down_signal):
+            random_start = np.random.randint(0, len(down_signal) - max_win)
+            random_end = random_start + np.random.randint(min_win, max_win)
+            random_win = np.arange(random_start, random_end)
+
+            intersections = [len(cap(p, random_win)) for p in intervals]
+            if sum(intersections) >= random_end - random_start:
+                continue
+
+            intervals.append(random_win)
+            durations.append(random_end - random_start - sum(intersections))
+
+        # interpolate
+        for interval in intervals:
+            down_signal[interval] = (
+                down_signal[interval[0] - 1] if interval[0] else down_signal[0]
+            )
+
+        # re-apply to the original
+        upsampled = np.repeat(down_signal, 8)
+        for i in range(len(signal)):
+            signal[i] = upsampled[i]
+
+        return signal
 
     def fuse_gt(s1, s2):
         s1 = (s1 - np.mean(s1)) / np.std(s1)
@@ -56,7 +81,7 @@ def HCIDriving(path, missing, sample_rate, gt_type, streams):
             this_df["BR"] = nk.ecg_rsp(ecg_rate, sampling_rate=1024)
 
         ### masking of "missing" values
-        this_df[streams] = this_df[streams].apply(mask_values)
+        this_df[streams] = this_df[streams].apply(mask_intervals)
 
         ### lowpass filter (0.1Hz) + downsample to 0.5Hz
         this_df["Time_Light"] = pd.to_datetime(

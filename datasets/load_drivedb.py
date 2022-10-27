@@ -1,5 +1,6 @@
 import os, wfdb, pandas as pd
 import numpy as np, neurokit2 as nk
+import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
 
 
@@ -12,16 +13,30 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
         b, a = butter(3, cut, fs=freq, btype="low")
         return filtfilt(b, a, ts)
 
-    def mask_values(signal=None, missing=missing):
-        num_missing = missing * len(signal)
-        impute_value = np.mean(signal)
-        mask = np.zeros(len(signal))
-        mask[: int(num_missing)] = 1
-        np.random.shuffle(mask)
-        signal = [
-            impute_value if (mask[i] and i) else signal[i] for i in range(len(signal))
-        ]
-        return np.array(signal)
+    def mask_intervals(signal=None, missing=missing):
+        intervals, durations = [], []
+        min_win, max_win = 0 * len(signal), 0.01 * len(signal)
+
+        def cap(a, b):
+            return [i for i in a if i in b]
+
+        while sum(durations) < missing * len(signal):
+            random_start = np.random.randint(0, len(signal) - max_win)
+            random_end = random_start + np.random.randint(min_win, max_win)
+            random_win = np.arange(random_start, random_end)
+
+            intersections = [len(cap(p, random_win)) for p in intervals]
+            if sum(intersections) >= random_end - random_start:
+                continue
+
+            intervals.append(random_win)
+            durations.append(random_end - random_start - sum(intersections))
+
+        # interpolate
+        for interval in intervals:
+            signal[interval] = signal[interval[0] - 1] if interval[0] else signal[0]
+
+        return signal
 
     data, gt_data, names = [], [], []
     for file in sorted(os.listdir(path)):
@@ -43,7 +58,7 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
         this_df["RESP_rate"] = out[["RSP_Rate"]]
 
         ### masking for missing data
-        this_df[streams] = this_df[streams].apply(mask_values)
+        this_df[streams] = this_df[streams].apply(mask_intervals)
 
         ### lowpass filter (0.05Hz) + downsample
         this_df.index = pd.date_range(

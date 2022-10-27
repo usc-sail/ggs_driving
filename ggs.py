@@ -1,5 +1,5 @@
 """
-Implementation taken from https://github.com/cvxgrp/GGS
+Implementation adapted from https://github.com/cvxgrp/GGS
 """
 
 import numpy as np, random

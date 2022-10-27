@@ -3,11 +3,14 @@ from itertools import combinations
 from ggs import GGS
 
 
-def apply_ggs(data, fs=0.5, lmbda=1):
+def apply_ggs(data, fs=0.5, lmbda=1, plot=False):
     data = data.T if len(data.shape) != 1 else data[None, ...]
-    kmax = data.shape[-1] // (60 * 3 * fs)
+    kmax = data.shape[-1] // (60 * 4 * fs)
     bps, _ = GGS(data, int(kmax), lmbda)
-    return bps[-1] if isinstance(bps[0], list) else bps
+    bps = bps[-1] if isinstance(bps[0], list) else bps
+    if plot:
+        plot_ggs(data[0], bps)
+    return bps
 
 
 def plot_ggs(signal, bps):
@@ -29,6 +32,7 @@ def segment_ts(ts, bps):
 
 
 def plot_cluster(signal, gt_bps, clusters, bps):
+    plt.rcParams.update({"font.size": 14})
     plt.figure(figsize=(20, 4))
     norm = 60 * 0.5
 
@@ -39,7 +43,6 @@ def plot_cluster(signal, gt_bps, clusters, bps):
     plt.xticks(np.arange(0, len(signal) / norm, 5))
     plt.xlabel("Time (min)")
     plt.ylabel("Clustered Ground Truth")
-    plt.title("Breakpoint Proposals")
 
     num = len(set(clusters))
     colors = (
@@ -51,13 +54,21 @@ def plot_cluster(signal, gt_bps, clusters, bps):
         if num == 3
         else ["#003f5c", "#ffa600"]
     )
+
+    flag = [-1] * num
     for i in range(len(gt_bps) - 1):
+        flag[clusters[i]] += 1
         plt.axvspan(
             gt_bps[i] / norm,
             gt_bps[i + 1] / norm,
             facecolor=colors[clusters[i]],
             alpha=0.3,
+            label="_" * flag[clusters[i]] + f"cluster {clusters[i] + 1}",
         )
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles, labels = np.array(handles), np.array(labels)
+    plt.legend(handles[labels.argsort()], labels[labels.argsort()], loc="upper right")
     for x in bps:
         plt.axvline(x=x / norm, linestyle="--", color="black")
     plt.show()

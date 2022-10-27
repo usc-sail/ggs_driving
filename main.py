@@ -50,6 +50,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # experiment
+    print(f"Loading {args.dataset} ...")
     data, gt_data, names = load_dataset(
         args.data_dir,
         args.dataset,
@@ -58,6 +59,7 @@ if __name__ == "__main__":
         args.gt_type,
         args.streams,
     )
+    print("Loaded. Now running ...")
     scores, compute_avg = dict(), list()
     for i in tqdm(range(len(names))):
         score = cluster_eval(

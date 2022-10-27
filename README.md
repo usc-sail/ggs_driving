@@ -1,4 +1,4 @@
-# Tracking Stress-level Changes on Drivers
+# Tracking Arousal-level Changes on Drivers
 
 ```
 git clone https://github.com/usc-sail/ggs_driving
@@ -19,7 +19,7 @@ After extracting them you should modify the paths in `datasets/__init__.py` acco
 
 You can modify parameters of the experiment at the `main.py` file.
 ```
-python main.py
+./run.sh
 ```
 
 Results are stored under `runs/{dataset}/` for each utilized dataset.
