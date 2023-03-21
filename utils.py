@@ -5,7 +5,7 @@ from ggs import GGS
 
 def apply_ggs(data, fs=0.5, lmbda=1, plot=False):
     data = data.T if len(data.shape) != 1 else data[None, ...]
-    kmax = data.shape[-1] // (60 * 4 * fs)
+    kmax = data.shape[-1] // (60 * 5 * fs)
     bps, _ = GGS(data, int(kmax), lmbda)
     bps = bps[-1] if isinstance(bps[0], list) else bps
     if plot:

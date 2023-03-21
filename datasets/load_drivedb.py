@@ -7,9 +7,12 @@ from scipy.signal import butter, filtfilt
 def DriveDB(path, missing, sample_rate, gt_type, streams):
 
     assert gt_type == "EDA", "Invalid ground truth"
-    assert all(s in ["HR", "RESP_amp", "RESP_rate"] for s in streams), "Invalid streams"
+    if "BR" in streams:
+        streams.remove("BR")
+        streams.append("RESP_rate")
+    assert all(s in ["HR", "RESP_rate"] for s in streams), "Invalid streams"
 
-    def lowpass_filter(ts=None, freq=15.5, cut=0.05):
+    def lowpass_filter(ts=None, freq=15.5, cut=0.25):
         b, a = butter(3, cut, fs=freq, btype="low")
         return filtfilt(b, a, ts)
 
@@ -58,7 +61,8 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
         this_df["RESP_rate"] = out[["RSP_Rate"]]
 
         ### masking for missing data
-        this_df[streams] = this_df[streams].apply(mask_intervals)
+        if missing > 0:
+            this_df[streams] = this_df[streams].apply(mask_intervals)
 
         ### lowpass filter (0.05Hz) + downsample
         this_df.index = pd.date_range(
@@ -72,7 +76,7 @@ def DriveDB(path, missing, sample_rate, gt_type, streams):
             gt_signal = this_df["hand GSR"].to_numpy()
         except:
             gt_signal = this_df["foot GSR"].to_numpy()
-        gt_signal = lowpass_filter(gt_signal, freq=sample_rate, cut=0.01)
+        gt_signal = lowpass_filter(gt_signal, freq=sample_rate, cut=0.05)
 
         data.append(this_df[streams])
         gt_data.append(gt_signal)

@@ -4,7 +4,6 @@ from datasets import load_dataset
 from tqdm import tqdm
 from tslearn.clustering import TimeSeriesKMeans
 
-
 def cluster_eval(gt_data, gt_bps, bps, n_clusters, plot=False):
     X = segment_ts(gt_data, gt_bps)
     model = TimeSeriesKMeans(n_clusters, metric="dtw", random_state=42)
@@ -13,20 +12,18 @@ def cluster_eval(gt_data, gt_bps, bps, n_clusters, plot=False):
         plot_cluster(gt_data, gt_bps, clusters, bps)
 
     old = gt_bps.copy()
-    for i in range(1, len(old) - 1):
-        if clusters[i] == clusters[i - 1]:
-            gt_bps.remove(old[i])
+    for j in range(1, len(old) - 1):
+        if clusters[j] == clusters[j - 1]:
+            gt_bps.remove(old[j])
 
     return covering_metric(bps, gt_bps, len(gt_data))
 
-
 if __name__ == "__main__":
-    # parser
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         "--dataset",
         default="DriveDB",
-        help="dataset used for experiments: choose from DriveDB, HCIDriving, AffectiveROAD",
+        help="choose from DriveDB, HCIDriving, AffectiveROAD",
     )
     parser.add_argument(
         "--data_dir", default="/media/data/public-data/drive/drivedb/1.0.0/"
@@ -46,10 +43,11 @@ if __name__ == "__main__":
         type=str,
         default=["HR"],
         help="physio signals to experiment with: HR, BR, RESP_rate, RESP_amp",
+        # help="physio signals to experiment with: HR, BR, HRV",
     )
+    parser.add_argument("--plot", default=False, type=bool, help="whether to plot seg")
     args = parser.parse_args()
 
-    # experiment
     print(f"Loading {args.dataset} ...")
     data, gt_data, names = load_dataset(
         args.data_dir,
@@ -59,9 +57,11 @@ if __name__ == "__main__":
         args.gt_type,
         args.streams,
     )
+
     print("Loaded. Now running ...")
     scores, compute_avg = dict(), list()
     for i in tqdm(range(len(names))):
+ 
         score = cluster_eval(
             gt_data[i],
             gt_bps=apply_ggs(gt_data[i], lmbda=args.lmbda),
@@ -70,13 +70,12 @@ if __name__ == "__main__":
         )
         compute_avg.append(score)
         scores[names[i]] = np.around(score, 3)
+
     scores["mean"] = np.around(np.mean(compute_avg), 3)
     scores["std"] = np.around(np.std(compute_avg), 3)
 
-    # logging
-    dir_name = f"runs/{args.dataset}/"
-    log_name = f"{'_'.join(args.streams)}_gt_{args.gt_type}_lambda_{args.lmbda}_missing_{args.missing}_clusters_{args.ncluster}"
-
+    dir_name = f"runs/{args.dataset}_new/"
     os.makedirs(dir_name, exist_ok=True)
+    log_name = f"{'_'.join(args.streams)}_gt_{args.gt_type}_lambda_{args.lmbda}_missing_{args.missing}_clusters_{args.ncluster}"
     with open(dir_name + log_name + ".json", "w") as f:
         f.write(json.dumps(scores, indent=4))

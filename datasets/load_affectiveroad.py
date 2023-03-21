@@ -6,12 +6,12 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def lowpass_filter_bio(ts=None, freq=1, cut=0.05):
+def lowpass_filter_bio(ts=None, freq=1, cut=0.25):
     b, a = butter(3, cut, fs=freq, btype="low")
     return filtfilt(b, a, ts)
 
 
-def lowpass_filter(ts=None, freq=4, cut=0.05):
+def lowpass_filter(ts=None, freq=4, cut=0.25):
     b, a = butter(3, cut, fs=freq, btype="low")
     return filtfilt(b, a, ts)
 
@@ -179,7 +179,8 @@ def AffectiveROAD(path, missing, sample_rate, gt_type, streams):
             bio_harness_csv_file, start_index_bio, stop_index_bio
         )
         # apply masking and downsampling to bioharness
-        this_df[streams] = this_df[streams].apply(mask_intervals)
+        if missing > 0:
+            this_df[streams] = this_df[streams].apply(mask_intervals)
         down = int(1 / sample_rate)
         if "Unnamed: 0" in this_df.columns:
             this_df = this_df.drop(columns=["Unnamed: 0"])
@@ -229,7 +230,7 @@ def AffectiveROAD(path, missing, sample_rate, gt_type, streams):
             gt_eda /= np.max(gt_eda)
             gt_signal = (gt_eda + metric.to_numpy().squeeze()) / 2
 
-        gt_signal = lowpass_filter(gt_signal, freq=0.5, cut=0.01)
+        gt_signal = lowpass_filter(gt_signal, freq=0.5, cut=0.05)
         gt_data.append(gt_signal)
 
     return data, gt_data, names

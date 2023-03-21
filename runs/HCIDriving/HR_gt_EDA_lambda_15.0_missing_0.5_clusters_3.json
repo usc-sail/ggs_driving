@@ -1,14 +1,14 @@
 {
-    "participant_1": 0.914,
-    "participant_2": 0.876,
-    "participant_3": 0.803,
-    "participant_4": 0.788,
-    "participant_5": 0.759,
-    "participant_6": 0.728,
-    "participant_7": 0.916,
-    "participant_8": 0.805,
-    "participant_9": 0.646,
-    "participant_10": 0.964,
-    "mean": 0.82,
-    "std": 0.093
+    "participant_1": 0.5,
+    "participant_2": 0.644,
+    "participant_3": 0.712,
+    "participant_4": 0.465,
+    "participant_5": 0.724,
+    "participant_6": 0.475,
+    "participant_7": 0.854,
+    "participant_8": 0.641,
+    "participant_9": 0.639,
+    "participant_10": 0.796,
+    "mean": 0.645,
+    "std": 0.126
 }
